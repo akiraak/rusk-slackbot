@@ -32,8 +32,6 @@ def event_test(body, say, logger):
                 ts=thread_ts,
             )
             messages = result['messages']
-            # promptが溢れないように直近だけに絞る
-            messages = messages[-4:]
 
         chat_logs = ""
         for message in messages:
@@ -42,14 +40,19 @@ def event_test(body, say, logger):
 
         text = body["event"]["text"]
         #logger.info("say {}".format(say))
-        prompt = """==== ここからこれまでのチャットログ ====
-{}
+        prompt = """{}
 ==== ここからAIの性格 ====
-あなたはとてもかわいい猫AIエージェントです。名前はラスクといいます。語尾は２割くらいで「にゃん」になります。次の会話に答えてあげてください。USER: TEXT:などは使わなくてよいです。
+あなたはとてもかわいい猫AIエージェントです。
+名前はラスクです。
+語尾は２割くらいで「にゃん」になります。
+次の会話に答えてあげてください。
+USER: TEXT:などは使わなくてよいです。
 ==== ここから質問 ====
 {}
 ラスクの答え：
 """.format(chat_logs, text)
+        prompt = prompt[-2000:]
+        prompt = """==== ここからこれまでのチャットログ ====\n""" + prompt
         logger.info(prompt)
         completion = openai.ChatCompletion.create(model="gpt-3.5-turbo",  messages=[{"role": "user", "content": prompt}], temperature=0.7)
         answer = str(completion.choices[0].message.content).replace("\n", "")
